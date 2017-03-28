@@ -1,4 +1,4 @@
-# Pretrained Inception-ResNet Demo with Flask
+# Pretrained Inception-V3 Demo with Flask
 
 ## Quick note
 
