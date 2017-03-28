@@ -14,4 +14,4 @@ mkdir -p serving/temp
 echo "Launching server."
 cd serving
 export FLASK_APP=serving_inception.py
-flask run
+

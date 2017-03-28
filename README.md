@@ -1,8 +1,12 @@
-# Pretrained Inception-ResNet Demo with Flask
+# Pretrained Inception-V3 Demo with Flask
 
 ## Quick note
 
-This demo is _not_ supposed to represent a production-ready server. It is not secure for the web, and is not setup to be responsive (server-client responses and model evaluation run in the same thread instead of asyncronously). Rather, this is a quick demonstration of how to utilize a pretrained Inception-ResNet model and quickly put together a prototype with it.
+This demo is _not_ supposed to represent a production-ready server.
+It is not secure for the web, and is not setup to be responsive (server-client responses 
+and model evaluation run in the same thread instead of asyncronously). Rather, this is a quick 
+demonstration of how to utilize a pretrained Inception-V3 model and quickly put together a
+ prototype with it.
 
 ## Dependencies
 
@@ -17,54 +21,46 @@ This demo is _not_ supposed to represent a production-ready server. It is not se
 2. Clone the repo, move into the directory, and execute `run_server.sh`:
 
 ```
-$ git clone https://github.com/samjabrahams/inception-resnet-flask-demo.git
-$ cd inception-resnet-flask-demo
+$ git clone https://nsckir@bitbucket.org/nsckir/scoodit_server.git
+$ cd inception-flask-demo
 $ ./run_server.sh
 ```
 
 ## About the files
 
-### `run_server.sh`
+### `run_inception_server.sh`
 
 * The main file, runs the preprocessing of files and then launches the Flask server
 * You must run this script from its directory, not from a parent or child directory. ie. this:
 ```
-$ ./run_server.sh
+$ ./run_inception_server.sh
 ```
 not:
 ```
-$ ../run_server.sh
+$ ../run_inception_server.sh
 ```
 or:
 ```
-$ inception-resnet-flask-demo/run_server.sh
+$ inception-flask-demo/run_inception_server.sh
 ```
 
 ### Pre-processing files
 
-#### `resnet_export.py`
+#### `inception_v3_export.py`
 
-* Downloads Inception-ResNet model and checkpoint files and converts them into a frozen and optimized protobuf file in `serving/static`
-
-#### `labels/merge.py`
-
-* Creates `descriptions.txt`, which is a line separated file that provides text descriptions of the outputs of the pretrained Inception-ResNet modeel. The first line corresponds to the output at index 0, the second line corresponds to the output at index 1 etc.
+* Converts the trained model into a frozen and optimized protobuf file in `serving/static`
 
 ### Flask Server files
 
-#### `serving/serving.py`
+#### `serving/serving_inception.py`
 
 * Starts up the Flask server and TensorFlow model Session
 * Contains route functions for the server
 
-#### `serving/model.py`
+#### `serving/inception_model.py`
 
 * Functions and singleton Session class for the Inception-ResNet Model
 * Singleton is used to preserve optimizations and prevent users from reloading the model from memory
-
-#### `serving/templates/layout.html` and `serving/templates/predict.html`
-
-* Jinja2 template files for the basic client interface.
 
 --- 
 
@@ -72,11 +68,11 @@ $ inception-resnet-flask-demo/run_server.sh
 
 The [TENSORFLOW_LICENSE](TENSORFLOW_LICENSE) applies to the following files:
 
-#### `inception_resnet_v2.py`
+#### `inception_v3_tf1.py`
 
-* Constructs the Inception ResNet V2 model
+* Constructs the Inception V3 model
 * From the [TensorFlow Models repository](https://github
-.com/tensorflow/models/blob/master/slim/nets/inception_resnet_v2.py)
+.com/tensorflow/models/blob/master/slim/nets/inception_v3.py)
 
 #### `inception_preprocessing.py`
 
