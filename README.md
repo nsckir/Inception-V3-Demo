@@ -7,6 +7,7 @@ It is not secure for the web, and is not setup to be responsive (server-client r
 and model evaluation run in the same thread instead of asyncronously). Rather, this is a quick 
 demonstration of how to utilize a pretrained Inception-V3 model and quickly put together a
  prototype with it.
+ (Cloned and adapted from `https://github.com/samjabrahams/inception-resnet-flask-demo`)
 
 ## Dependencies
 
@@ -59,7 +60,7 @@ $ inception-flask-demo/run_inception_server.sh
 
 #### `serving/inception_model.py`
 
-* Functions and singleton Session class for the Inception-ResNet Model
+* Functions and singleton Session class for the Inception-V3 Model
 * Singleton is used to preserve optimizations and prevent users from reloading the model from memory
 
 --- 
