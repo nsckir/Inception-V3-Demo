@@ -1,5 +1,5 @@
 """
-Loads pre-trained Inception-ResNet V2 and exports frozen graph protobuf
+Loads pre-trained Inception-V3 and exports frozen graph protobuf
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -9,18 +9,18 @@ import os
 import os.path
 import sys
 import tarfile
-from six.moves.urllib.request import urlretrieve
+# from six.moves.urllib.request import urlretrieve
 
 import tensorflow as tf
 
 import freeze_graph as freeze
 import inception_preprocessing as preprocess
-import inception_resnet_v2 as resnet
+import inception_v3_tf1 as inception
 import optimize_for_inference_lib as optimize
 
 
 tf.app.flags.DEFINE_string(
-    'output', 'inception_resnet',
+    'output', 'inception_v3',
     'Base pathname for exported metagraph and data files')
 
 tf.app.flags.DEFINE_integer(
@@ -34,49 +34,25 @@ tf.app.flags.DEFINE_string(
 
 tf.app.flags.DEFINE_string('data_dir', 'serving/static',
     'Directory where checkpoints and metagraphs are saved')
-tf.app.flags.DEFINE_bool('delete_checkpoint', True,
+tf.app.flags.DEFINE_bool('delete_checkpoint', False,
     'If True, deletes downloaded ResNet checkpoint after creating frozen output'
     'file (saves disk space)')
 
 FLAGS = tf.app.flags.FLAGS
 
 
-def maybe_download_and_extract_checkpoint():
-    zipped_basename = os.path.basename(FLAGS.ckpt_url)
-    zipped_filename = os.path.join(FLAGS.data_dir, zipped_basename)
-    ckpt_basename = zipped_basename[:zipped_basename.find('.')] + '.ckpt'
-    ckpt_filename = os.path.join(FLAGS.data_dir, ckpt_basename)
-    if os.path.exists(ckpt_filename):
-        print('Found checkpoint file in {}.'.format(ckpt_filename))
-    else:
-        if os.path.exists(zipped_filename):
-            print('Found zipped checkpoint file in {}.'.format(zipped_filename))
-        else:
-            print('Downloading {}.'.format(FLAGS.ckpt_url))
-            zipped_filename, _ = urlretrieve(FLAGS.ckpt_url, zipped_filename)
-            print('Download complete.')
-
-        print('Extracting {}.'.format(zipped_filename))
-        tar = tarfile.open(zipped_filename)
-        sys.stdout.flush()
-        tar.extractall(FLAGS.data_dir)
-        tar.close()
-        print('Extraction complete.')
-        os.remove(zipped_filename)
-    return ckpt_filename
-
-
 def build_model(graph):
     with graph.as_default():
-        with tf.contrib.slim.arg_scope(resnet.inception_resnet_v2_arg_scope()):
+        with tf.contrib.slim.arg_scope(inception.inception_v3_tf1_arg_scope()):
             placeholder = tf.placeholder(tf.string, name='input')
             image = tf.image.decode_jpeg(placeholder, channels=3, name='image')
             image = preprocess.preprocess_for_eval(image, FLAGS.image_size,
                                                    FLAGS.image_size)
             image = tf.expand_dims(image, 0)
-            logits, end_points = resnet.inception_resnet_v2(
+            logits, end_points = inception.inception_v3_tf1(
                 image, is_training=False, dropout_keep_prob=1.0)
         saver = tf.train.Saver(tf.global_variables())
+        saver.as_saver_def()
     return placeholder, logits, end_points
 
 
@@ -118,10 +94,10 @@ def export_model(graph, ckpt_filename, placeholder, logits, end_points):
 
 
 def main(_):
-    ckpt_filename = maybe_download_and_extract_checkpoint()
+    ckpt_filename = "/home/kiril/PycharmProjects/scoodit_image_classification/models/inception_v3/scoodit_178/model/model.ckpt"
     graph = tf.Graph()
     placeholder, logits, end_points = build_model(graph)
-    output_filename, proto_filename = export_model(graph, ckpt_filename, 
+    output_filename, proto_filename = export_model(graph, ckpt_filename,
                                                    placeholder, logits, 
                                                    end_points)
     print('Inference graph file: {}'.format(output_filename))

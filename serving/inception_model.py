@@ -18,13 +18,13 @@ def get_image(sess):
 def get_logits(sess):
     """Returns a handle to the output logits Tensor"""
     return sess.graph.get_tensor_by_name(
-        'InceptionResnetV2/Logits/Logits/BiasAdd:0')
+        'InceptionV3/Logits/SpatialSqueeze:0')
 
 
 def get_predictions(sess):
     """Returns a handle to the output predictions Tensor"""
     return sess.graph.get_tensor_by_name(
-        'InceptionResnetV2/Logits/Predictions:0')
+        'InceptionV3/Predictions/Reshape_1:0')
 
 
 class Session(object):
@@ -43,7 +43,7 @@ class Session(object):
             graph = tf.Graph()
             graph_def = tf.GraphDef()
             with graph.as_default():
-                with open('static/inception_resnet_frozen.pb', 'rb') as f:
+                with open('static/inception_v3_frozen.pb', 'rb') as f:
                     graph_def.ParseFromString(f.read())
                 _ = tf.import_graph_def(graph_def, name='')
             sess = tf.Session(graph=graph)

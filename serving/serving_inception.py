@@ -1,10 +1,10 @@
 import os
 import os.path
 import random
-from flask import Flask, request, g, redirect, render_template, flash, \
-    send_from_directory
+import json
+from flask import Flask, request, g,  make_response
 from werkzeug.utils import secure_filename
-import model
+import inception_model
 
 ################################################
 # Flask App configuration
@@ -26,18 +26,18 @@ app.config.update({
 if os.environ.get("FLASK_DEBUG") == "1":
     # This prevents multiple sessions from being created in DEBUG mode
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        sess = model.Session()
+        sess = inception_model.Session()
 else:
-    sess = model.Session()
+    sess = inception_model.Session()
 
 
 ################################################
 # Functions for descriptions of model output
 ################################################
 def create_descriptions():
-    """Converts static/descriptions.txt into a list of strings"""
+    """Converts static/scoodit178_descriptions.txt into a list of strings"""
     descriptions = []
-    with app.open_resource('static/descriptions.txt', mode='r') as f:
+    with app.open_resource('static/scoodit178_descriptions.txt', mode='r') as f:
         for line in f:
             descriptions.append(line)
     return descriptions
@@ -53,18 +53,6 @@ def get_descriptions():
 ################################################
 # Routes
 ################################################
-@app.route('/temp/<filename>')
-def uploaded_file(filename):
-    """Allows us to serve temporarily hosted images in the temp directory"""
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-
-@app.route('/', methods=['GET'])
-def home():
-    """Basic index page rendering"""
-    return render_template('predict.html')
-
-
 @app.route('/', methods=['POST'])
 def predict():
     """Classifies JPEG image passed in as POST data
@@ -77,30 +65,17 @@ def predict():
     NOTE: This function is NOT SAFE. Strictly for demonstration purposes. Does
     not do any safe-checking of the data being saved locally. Only use locally.
     """
-    results = []
-    filename = None
-    if 'file' not in request.files:
-        flash('No file part')
-        return redirect(request.url)
-    file = request.files['file']
-    if file.filename == '':
-        flash('No selected file')
-        return redirect(request.url)
-    if file:
-        for f in os.listdir(app.config['UPLOAD_FOLDER']):
-            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], f))
-        filename = os.path.join(app.config['UPLOAD_FOLDER'], '{}.jpg'.format(
-            random.randint(0, 999999999)))
-        file.save(filename)
-        file.seek(0)
-        data = file.read()
-        feed_dict = {model.get_input(sess): data}
-        prediction = sess.run(model.get_predictions(sess), feed_dict)
-        top_k = prediction.argsort()[0][-5:][::-1]
-        descriptions = get_descriptions()
-        for idx in top_k:
-            description = descriptions[idx]
-            score = prediction[0][idx]
-            print('{} (score = {})'.format(description, score))
-            results.append((description, score))
-    return render_template('predict.html', results=results, filename=filename)
+    descr = []
+    scores = []
+    string_buffer = request.stream.read()
+    feed_dict = {inception_model.get_input(sess): string_buffer}
+    prediction = sess.run(inception_model.get_predictions(sess), feed_dict)
+    top_k = prediction.argsort()[0][-5:][::-1]
+    descriptions = get_descriptions()
+    for idx in top_k:
+        description = descriptions[idx]
+        description = description.strip().split(':',)[1].rsplit('_', 1)[0].replace('_', ' ')
+        score = prediction[0][idx]
+        descr.append(description)
+        scores.append(str(score))
+    return make_response(json.dumps(zip(descr, scores)), 200)
